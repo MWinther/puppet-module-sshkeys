@@ -24,18 +24,43 @@
 # === Examples
 #
 #  class { module-sshkeys:
-#    servers => [ 'pool.ntp.org', 'ntp.local.company.com' ]
+#    keys => [
+#      { 'the_key':
+#        'name'     => 'the_key',
+#        'ensure'   => present,
+#        'key_type' => 'dsa',
+#        'key'      => 'ABCDggsndjadkfjaYFDSjdjfadj==',
+#      },
+#    ]
 #  }
 #
 # === Authors
 #
-# Author Name <author@domain.com>
-#
-# === Copyright
-#
-# Copyright 2013 Your name here, unless otherwise noted.
-#
-class module-sshkeys {
+# Mattias Winther <mattias.winther@ericsson.com>
 
+class module-sshkeys (
+  $keys = undef,
+){
+
+  if validate_array($keys) {
+    $my_keys = $keys
+  } elsif validate_hash($keys) {
+    $my_keys = [$keys,]
+  } elsif $keys != undef {
+    fail('$keys must be either an array or a hash.')
+  }
+
+  if $keys != undef {
+    key_store { $my_keys: }
+  }
+
+  define key_store {
+    $sshkey = $name
+    ssh_authorized_key { $key['name']:
+      ensure => $key['ensure'],
+      user   => $key['user'],
+      type   => $key['key_type'],
+      key    => $key['key'],
+  }
 
 }
